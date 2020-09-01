@@ -205,26 +205,31 @@ export default function useBlockSync( {
 					? onChangeRef.current
 					: onInputRef.current;
 
-				const outgoingBlocks = shouldMapBlockIds()
+				const shouldMapIds = shouldMapBlockIds();
+				const outgoingBlocks = shouldMapIds
 					? mapBlocks( blocks, instanceId, DIRECTION_OUT )
 					: blocks;
 
-				updateParent( outgoingBlocks, {
-					selectionStart: shouldMapBlockIds()
-						? mapBlockId(
-								getSelectionStart(),
-								instanceId,
-								DIRECTION_OUT
-						  )
-						: getSelectionStart(),
-					selectionEnd: shouldMapBlockIds()
-						? mapBlockId(
-								getSelectionEnd(),
-								instanceId,
-								DIRECTION_OUT
-						  )
-						: getSelectionEnd(),
-				} );
+				updateParent(
+					outgoingBlocks,
+					shouldMapIds
+						? {
+								selectionStart: mapBlockId(
+									getSelectionStart(),
+									instanceId,
+									DIRECTION_OUT
+								),
+								selectionEnd: mapBlockId(
+									getSelectionEnd(),
+									instanceId,
+									DIRECTION_OUT
+								),
+						  }
+						: {
+								selectionStart: getSelectionStart(),
+								selectionEnd: getSelectionEnd(),
+						  }
+				);
 			}
 			previousAreBlocksDifferent = areBlocksDifferent;
 		} );
@@ -257,15 +262,16 @@ export default function useBlockSync( {
 			setControlledBlocks();
 
 			if ( controlledSelectionStart && controlledSelectionEnd ) {
+				const shouldMapIds = shouldMapBlockIds();
 				resetSelection(
-					shouldMapBlockIds()
+					shouldMapIds
 						? mapBlockId(
 								controlledSelectionStart,
 								instanceId,
 								DIRECTION_IN
 						  )
 						: controlledSelectionStart,
-					shouldMapBlockIds()
+					shouldMapIds
 						? mapBlockId(
 								controlledSelectionStart,
 								instanceId,
