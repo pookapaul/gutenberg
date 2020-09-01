@@ -21,53 +21,39 @@ import { useRegistry } from '@wordpress/data';
  */
 
 const entityTracker = {};
-const entitiesToLocal = {};
-const localToEntities = {};
+const blockMapping = {};
 
 function initBlockIdTrackers( instanceId ) {
-	if ( ! entitiesToLocal[ instanceId ] ) {
-		entitiesToLocal[ instanceId ] = {};
-	}
-	if ( ! localToEntities[ instanceId ] ) {
-		localToEntities[ instanceId ] = {};
+	if ( ! blockMapping[ instanceId ] ) {
+		blockMapping[ instanceId ] = {
+			incoming: {}, // entity => local
+			outgoing: {}, // local => entity
+		};
 	}
 }
 
-function mapBlocksToLocalIds( instanceId, blocks ) {
+function mapBlocks( blocks, instanceId, direction ) {
 	initBlockIdTrackers( instanceId );
-	// Note: actual implementation would have to account for nested innerBlocks.
-	return blocks.map( ( block ) => {
-		if ( ! entitiesToLocal[ instanceId ][ block.clientId ] ) {
-			const localId = uuid();
-			entitiesToLocal[ instanceId ][ block.clientId ] = localId;
-			localToEntities[ instanceId ][ localId ] = block.clientId;
-		}
-		return {
-			...block,
-			innerBlocks: mapBlocksToLocalIds( instanceId, block.innerBlocks ),
-			clientId: entitiesToLocal[ instanceId ][ block.clientId ],
-		};
-	} );
+	return blocks.map( ( block ) => ( {
+		...block,
+		innerBlocks: mapBlocks( block.innerBlocks, instanceId, direction ),
+		clientId: mapBlockId( block.clientId, instanceId, direction ),
+	} ) );
 }
 
-function mapBlocksToEntityIds( instanceId, blocks ) {
-	initBlockIdTrackers( instanceId );
-	// Note: actual implementation would have to account for nested innerBlocks.
-	return blocks.map( ( block ) => {
-		if ( ! localToEntities[ instanceId ][ block.clientId ] ) {
-			// This entityId could be more tricky when inserting new blocks.
-			// Would need to verify how clientIds for new blocks are generated,
-			// and if that would be compatible with change here.
-			const entityBlockId = uuid();
-			localToEntities[ instanceId ][ block.clientId ] = entityBlockId;
-			entitiesToLocal[ instanceId ][ entityBlockId ] = block.clientId;
-		}
-		return {
-			...block,
-			innerBlocks: mapBlocksToEntityIds( instanceId, block.innerBlocks ),
-			id: localToEntities[ instanceId ][ block.clientId ],
-		};
-	} );
+function getOpposingDirection( direction ) {
+	return direction === 'incoming' ? 'outgoing' : 'incoming';
+}
+
+function mapBlockId( blockClientId, instanceId, direction ) {
+	if ( ! blockMapping[ instanceId ][ direction ][ blockClientId ] ) {
+		const newId = uuid();
+		blockMapping[ instanceId ][ direction ][ blockClientId ] = newId;
+		blockMapping[ instanceId ][ getOpposingDirection( direction ) ][
+			newId
+		] = blockClientId;
+	}
+	return blockMapping[ instanceId ][ direction ][ blockClientId ];
 }
 
 /**
@@ -144,14 +130,16 @@ function useBlockSync( {
 		}
 		if ( ! entityTracker[ entityId ] ) {
 			entityTracker[ entityId ] = {};
+			entityTracker[ entityId ][ instanceId ] = 1;
+		} else {
+			entityTracker[ entityId ][ instanceId ] = 2;
 		}
-		entityTracker[ entityId ][ instanceId ] = true;
 
 		return () => delete entityTracker[ entityId ][ instanceId ];
 	}, [ entityId ] );
 
 	const shouldUseLocalBlockIds = () => {
-		return !! entityTracker[ entityId ]?.[ instanceId ];
+		return entityTracker[ entityId ]?.[ instanceId ] === 2;
 	};
 
 	const setControlledBlocks = () => {
@@ -164,7 +152,7 @@ function useBlockSync( {
 		// and so it would already be persisted.
 		__unstableMarkNextChangeAsNotPersistent();
 		const incomingBlocks = shouldUseLocalBlockIds()
-			? mapBlocksToLocalIds( instanceId, controlledBlocks )
+			? mapBlocks( controlledBlocks, instanceId, 'incoming' )
 			: controlledBlocks;
 
 		if ( clientId ) {
@@ -249,13 +237,26 @@ function useBlockSync( {
 					? onChangeRef.current
 					: onInputRef.current;
 
+				const updateDirection = 'outgoing';
 				const outgoingBlocks = shouldUseLocalBlockIds()
-					? mapBlocksToEntityIds( instanceId, blocks )
+					? mapBlocks( blocks, instanceId, updateDirection )
 					: blocks;
 
 				updateParent( outgoingBlocks, {
-					selectionStart: getSelectionStart(),
-					selectionEnd: getSelectionEnd(),
+					selectionStart: shouldUseLocalBlockIds()
+						? mapBlockId(
+								getSelectionStart(),
+								instanceId,
+								updateDirection
+						  )
+						: getSelectionStart(),
+					selectionEnd: shouldUseLocalBlockIds()
+						? mapBlockId(
+								getSelectionEnd(),
+								instanceId,
+								updateDirection
+						  )
+						: getSelectionEnd(),
 				} );
 			}
 			previousAreBlocksDifferent = areBlocksDifferent;
@@ -290,8 +291,20 @@ function useBlockSync( {
 
 			if ( controlledSelectionStart && controlledSelectionEnd ) {
 				resetSelection(
-					controlledSelectionStart,
-					controlledSelectionEnd
+					shouldUseLocalBlockIds()
+						? mapBlockId(
+								controlledSelectionStart,
+								instanceId,
+								'incoming'
+						  )
+						: controlledSelectionStart,
+					shouldUseLocalBlockIds()
+						? mapBlockId(
+								controlledSelectionStart,
+								instanceId,
+								'incoming'
+						  )
+						: controlledSelectionEnd
 				);
 			}
 		}
