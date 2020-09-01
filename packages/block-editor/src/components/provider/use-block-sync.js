@@ -86,7 +86,10 @@ function mapBlockId( blockClientId, instanceId, direction ) {
  *                                is used to initalize the block-editor store
  *                                and for resetting the blocks to incoming
  *                                changes like undo.
- * @param {string} props.entityId TODO
+ * @param {string} props.entityId An ID which should identify the "thing" to which
+ *                                the blocks belong. This is used to keep track
+ *                                of times when two different components need to
+ *                                sync the same blocks.
  * @param {Object} props.selectionStart The selection start vlaue from the
  *                                controlling component.
  * @param {Object} props.selectionEnd The selection end vlaue from the
@@ -101,7 +104,7 @@ function mapBlockId( blockClientId, instanceId, direction ) {
  *                                for the given clientId. When this is called,
  *                                controlling sources do not become dirty.
  */
-function useBlockSync( {
+export default function useBlockSync( {
 	clientId = null,
 	value: controlledBlocks,
 	selectionStart: controlledSelectionStart,
@@ -310,5 +313,3 @@ function useBlockSync( {
 		}
 	}, [ controlledBlocks, clientId ] );
 }
-
-export default useBlockSync;
