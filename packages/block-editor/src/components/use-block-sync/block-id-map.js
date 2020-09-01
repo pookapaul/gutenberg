@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-const { v4: uuid } = require( 'uuid' );
+import { v4 as uuid } from 'uuid';
 
 /**
  * Internal dependencies

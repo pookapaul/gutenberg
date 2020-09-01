@@ -2,7 +2,7 @@
  * External dependencies
  */
 import { last, noop } from 'lodash';
-const { v4: uuid } = require( 'uuid' );
+import { v4 as uuid } from 'uuid';
 
 /**
  * WordPress dependencies
