@@ -11,6 +11,15 @@ import { useEffect, useRef } from '@wordpress/element';
 import { useRegistry } from '@wordpress/data';
 
 /**
+ * Internal dependencies
+ */
+import {
+	setupEntityInstance,
+	removeEntityInstance,
+	isDuplicateEntityInstance,
+} from '../use-block-sync';
+
+/**
  * A function to call when the block value has been updated in the block-editor
  * store.
  *
@@ -20,7 +29,6 @@ import { useRegistry } from '@wordpress/data';
  *                           and selectionEnd.
  */
 
-const entityTracker = {};
 const blockMapping = {};
 
 function initBlockIdTrackers( instanceId ) {
@@ -128,21 +136,12 @@ export default function useBlockSync( {
 	const pendingChanges = useRef( { incoming: null, outgoing: [] } );
 
 	useEffect( () => {
-		if ( ! entityId || ! instanceId ) {
-			return;
-		}
-		if ( ! entityTracker[ entityId ] ) {
-			entityTracker[ entityId ] = {};
-			entityTracker[ entityId ][ instanceId ] = 1;
-		} else {
-			entityTracker[ entityId ][ instanceId ] = 2;
-		}
-
-		return () => delete entityTracker[ entityId ][ instanceId ];
+		setupEntityInstance( entityId, instanceId );
+		return () => removeEntityInstance();
 	}, [ entityId ] );
 
 	const shouldUseLocalBlockIds = () => {
-		return entityTracker[ entityId ]?.[ instanceId ] === 2;
+		isDuplicateEntityInstance( entityId, instanceId );
 	};
 
 	const setControlledBlocks = () => {
