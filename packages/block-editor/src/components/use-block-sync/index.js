@@ -18,6 +18,8 @@ import {
 	removeEntityInstance,
 	isDuplicateEntityInstance,
 } from './entity-instances';
+import { mapBlocks, mapBlockId } from './block-id-map';
+import { DIRECTION_OUT, DIRECTION_IN } from './constants';
 
 /**
  * A function to call when the block value has been updated in the block-editor
@@ -28,41 +30,6 @@ import {
  * @param {Object}   options The updated block options, such as selectionStart
  *                           and selectionEnd.
  */
-
-const blockMapping = {};
-
-function initBlockIdTrackers( instanceId ) {
-	if ( ! blockMapping[ instanceId ] ) {
-		blockMapping[ instanceId ] = {
-			incoming: {}, // entity => local
-			outgoing: {}, // local => entity
-		};
-	}
-}
-
-function mapBlocks( blocks, instanceId, direction ) {
-	initBlockIdTrackers( instanceId );
-	return blocks.map( ( block ) => ( {
-		...block,
-		innerBlocks: mapBlocks( block.innerBlocks, instanceId, direction ),
-		clientId: mapBlockId( block.clientId, instanceId, direction ),
-	} ) );
-}
-
-function getOpposingDirection( direction ) {
-	return direction === 'incoming' ? 'outgoing' : 'incoming';
-}
-
-function mapBlockId( blockClientId, instanceId, direction ) {
-	if ( ! blockMapping[ instanceId ][ direction ][ blockClientId ] ) {
-		const newId = uuid();
-		blockMapping[ instanceId ][ direction ][ blockClientId ] = newId;
-		blockMapping[ instanceId ][ getOpposingDirection( direction ) ][
-			newId
-		] = blockClientId;
-	}
-	return blockMapping[ instanceId ][ direction ][ blockClientId ];
-}
 
 /**
  * useBlockSync is a side effect which handles bidirectional sync between the
@@ -140,7 +107,7 @@ export default function useBlockSync( {
 		return () => removeEntityInstance();
 	}, [ entityId ] );
 
-	const shouldUseLocalBlockIds = () => {
+	const shouldMapBlockIds = () => {
 		isDuplicateEntityInstance( entityId, instanceId );
 	};
 
@@ -153,8 +120,8 @@ export default function useBlockSync( {
 		// controlled inner blocks when the change was caused by an entity,
 		// and so it would already be persisted.
 		__unstableMarkNextChangeAsNotPersistent();
-		const incomingBlocks = shouldUseLocalBlockIds()
-			? mapBlocks( controlledBlocks, instanceId, 'incoming' )
+		const incomingBlocks = shouldMapBlockIds()
+			? mapBlocks( controlledBlocks, instanceId, DIRECTION_IN )
 			: controlledBlocks;
 
 		if ( clientId ) {
@@ -239,24 +206,23 @@ export default function useBlockSync( {
 					? onChangeRef.current
 					: onInputRef.current;
 
-				const updateDirection = 'outgoing';
-				const outgoingBlocks = shouldUseLocalBlockIds()
-					? mapBlocks( blocks, instanceId, updateDirection )
+				const outgoingBlocks = shouldMapBlockIds()
+					? mapBlocks( blocks, instanceId, DIRECTION_OUT )
 					: blocks;
 
 				updateParent( outgoingBlocks, {
-					selectionStart: shouldUseLocalBlockIds()
+					selectionStart: shouldMapBlockIds()
 						? mapBlockId(
 								getSelectionStart(),
 								instanceId,
-								updateDirection
+								DIRECTION_OUT
 						  )
 						: getSelectionStart(),
-					selectionEnd: shouldUseLocalBlockIds()
+					selectionEnd: shouldMapBlockIds()
 						? mapBlockId(
 								getSelectionEnd(),
 								instanceId,
-								updateDirection
+								DIRECTION_OUT
 						  )
 						: getSelectionEnd(),
 				} );
@@ -293,18 +259,18 @@ export default function useBlockSync( {
 
 			if ( controlledSelectionStart && controlledSelectionEnd ) {
 				resetSelection(
-					shouldUseLocalBlockIds()
+					shouldMapBlockIds()
 						? mapBlockId(
 								controlledSelectionStart,
 								instanceId,
-								'incoming'
+								DIRECTION_IN
 						  )
 						: controlledSelectionStart,
-					shouldUseLocalBlockIds()
+					shouldMapBlockIds()
 						? mapBlockId(
 								controlledSelectionStart,
 								instanceId,
-								'incoming'
+								DIRECTION_IN
 						  )
 						: controlledSelectionEnd
 				);

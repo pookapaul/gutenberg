@@ -1,5 +1,7 @@
-const ENTITY_FIRST_INSTANCE = 1;
-const ENTITY_DUPLICATE_INSTANCE = 2;
+/**
+ * Internal dependencies
+ */
+import { ENTITY_DUPLICATE_INSTANCE, ENTITY_FIRST_INSTANCE } from './constants';
 
 const ENTITY_INSTANCES = {};
 
