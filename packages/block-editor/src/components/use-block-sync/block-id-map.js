@@ -10,7 +10,7 @@ import { DIRECTION_IN, DIRECTION_OUT } from './constants';
 
 const BLOCK_ID_MAP = {};
 
-function initBlockIdTrackers( instanceId ) {
+function initBlockMap( instanceId ) {
 	if ( ! BLOCK_ID_MAP[ instanceId ] ) {
 		BLOCK_ID_MAP[ instanceId ] = {
 			[ DIRECTION_IN ]: {}, // entity => local
@@ -24,7 +24,7 @@ function flipDirection( direction ) {
 }
 
 export function mapBlockId( blockClientId, instanceId, direction ) {
-	initBlockIdTrackers( instanceId );
+	initBlockMap( instanceId );
 	if ( ! BLOCK_ID_MAP[ instanceId ][ direction ][ blockClientId ] ) {
 		const newId = uuid();
 		BLOCK_ID_MAP[ instanceId ][ direction ][ blockClientId ] = newId;
@@ -36,7 +36,7 @@ export function mapBlockId( blockClientId, instanceId, direction ) {
 }
 
 export function mapBlocks( blocks, instanceId, direction ) {
-	initBlockIdTrackers( instanceId );
+	initBlockMap( instanceId );
 	return blocks.map( ( block ) => ( {
 		...block,
 		innerBlocks: mapBlocks( block.innerBlocks, instanceId, direction ),
