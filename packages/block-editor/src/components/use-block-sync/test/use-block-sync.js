@@ -6,7 +6,7 @@ import { create, act } from 'react-test-renderer';
 /**
  * Internal dependencies
  */
-import useBlockSync from '../use-block-sync';
+import useBlockSync from '../index';
 import withRegistryProvider from '../../provider/with-registry-provider';
 import * as blockEditorActions from '../../../store/actions';
 
