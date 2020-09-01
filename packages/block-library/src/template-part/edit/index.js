@@ -70,7 +70,7 @@ export default function TemplatePartEdit( {
 						setAttributes={ setAttributes }
 					/>
 					<Dropdown
-						contentClassName="wp-block-template-part__placeholder-preview-dropdown-content"
+						contentClassName="wp-block-template-part__preview-dropdown-content"
 						position="bottom right left"
 						renderToggle={ ( { isOpen, onToggle } ) => (
 							<>
@@ -79,7 +79,7 @@ export default function TemplatePartEdit( {
 									onClick={ onToggle }
 									aria-expanded={ isOpen }
 								>
-									{ __( 'Choose existing' ) }
+									{ __( 'Choose another' ) }
 								</Button>
 							</>
 						) }
