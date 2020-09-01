@@ -4,6 +4,8 @@
 import { useRef, useEffect } from '@wordpress/element';
 import { useSelect, useDispatch } from '@wordpress/data';
 import { BlockControls } from '@wordpress/block-editor';
+import { Dropdown, Button } from '@wordpress/components';
+import { __ } from '@wordpress/i18n';
 
 /**
  * Internal dependencies
@@ -12,6 +14,7 @@ import useTemplatePartPost from './use-template-part-post';
 import TemplatePartNamePanel from './name-panel';
 import TemplatePartInnerBlocks from './inner-blocks';
 import TemplatePartPlaceholder from './placeholder';
+import TemplatePartSelection from './selection';
 
 export default function TemplatePartEdit( {
 	attributes: { postId: _postId, slug, theme },
@@ -65,6 +68,26 @@ export default function TemplatePartEdit( {
 					<TemplatePartNamePanel
 						postId={ postId }
 						setAttributes={ setAttributes }
+					/>
+					<Dropdown
+						contentClassName="wp-block-template-part__placeholder-preview-dropdown-content"
+						position="bottom right left"
+						renderToggle={ ( { isOpen, onToggle } ) => (
+							<>
+								<Button
+									isPrimary
+									onClick={ onToggle }
+									aria-expanded={ isOpen }
+								>
+									{ __( 'Choose existing' ) }
+								</Button>
+							</>
+						) }
+						renderContent={ () => (
+							<TemplatePartSelection
+								setAttributes={ setAttributes }
+							/>
+						) }
 					/>
 				</BlockControls>
 				<TemplatePartInnerBlocks
