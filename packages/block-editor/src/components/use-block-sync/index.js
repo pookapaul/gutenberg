@@ -107,9 +107,8 @@ export default function useBlockSync( {
 		return () => removeEntityInstance();
 	}, [ entityId ] );
 
-	const shouldMapBlockIds = () => {
+	const shouldMapBlockIds = () =>
 		isDuplicateEntityInstance( entityId, instanceId );
-	};
 
 	const setControlledBlocks = () => {
 		if ( ! controlledBlocks ) {
