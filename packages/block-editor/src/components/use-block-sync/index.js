@@ -273,7 +273,7 @@ export default function useBlockSync( {
 						: controlledSelectionStart,
 					shouldMapIds
 						? mapBlockId(
-								controlledSelectionStart,
+								controlledSelectionEnd,
 								instanceId,
 								DIRECTION_IN
 						  )

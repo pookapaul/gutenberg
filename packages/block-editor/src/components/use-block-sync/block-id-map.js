@@ -24,6 +24,11 @@ function flipDirection( direction ) {
 }
 
 export function mapBlockId( blockClientId, instanceId, direction ) {
+	// Avoid running map code on non-string clientIds. There appear to be times
+	// where this function can be called with `blockClientId = {}`
+	if ( typeof blockClientId !== 'string' ) {
+		return blockClientId;
+	}
 	initBlockMap( instanceId );
 	if ( ! BLOCK_ID_MAP[ instanceId ][ direction ][ blockClientId ] ) {
 		const newId = uuid();
