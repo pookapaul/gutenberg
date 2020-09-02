@@ -105,7 +105,7 @@ export default function useBlockSync( {
 	useEffect( () => {
 		setupEntityInstance( entityId, instanceId );
 		return () => removeEntityInstance();
-	}, [ entityId ] );
+	}, [ entityId, instanceId ] );
 
 	const shouldMapBlockIds = () =>
 		isDuplicateEntityInstance( entityId, instanceId );
