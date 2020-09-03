@@ -14,6 +14,27 @@ function gutenberg_experimental_global_styles_has_theme_json_support() {
 	return is_readable( locate_template( 'experimental-theme.json' ) );
 }
 
+
+/**
+ * Returns the global style mappings.
+ *
+ * @return array
+ */
+function gutenberg_experimental_get_global_styles_mapping() {
+	return array(
+		'line-height'              => array( 'typography', 'lineHeight' ),
+		'font-size'                => array( 'typography', 'fontSize' ),
+		'background'               => array( 'color', 'gradient' ),
+		'background-color'         => array( 'color', 'background' ),
+		'color'                    => array( 'color', 'text' ),
+		'padding-top'              => array( 'spacing', 'padding', 'top' ),
+		'padding-right'            => array( 'spacing', 'padding', 'right' ),
+		'padding-bottom'           => array( 'spacing', 'padding', 'bottom' ),
+		'padding-left'             => array( 'spacing', 'padding', 'left' ),
+		'--wp--style--color--link' => array( 'color', 'link' ),
+	);
+}
+
 /**
  * Given a tree, it creates a flattened one
  * by merging the keys and binding the leaf values
@@ -382,14 +403,7 @@ function gutenberg_experimental_global_styles_get_block_data() {
  * @return array Containing a set of css rules.
  */
 function gutenberg_experimental_global_styles_flatten_styles_tree( $styles ) {
-	$mappings = array(
-		'line-height'              => array( 'typography', 'lineHeight' ),
-		'font-size'                => array( 'typography', 'fontSize' ),
-		'background'               => array( 'color', 'gradient' ),
-		'background-color'         => array( 'color', 'background' ),
-		'color'                    => array( 'color', 'text' ),
-		'--wp--style--color--link' => array( 'color', 'link' ),
-	);
+	$mappings = gutenberg_experimental_get_global_styles_mapping();
 
 	$result = array();
 
@@ -646,6 +660,7 @@ function gutenberg_experimental_global_styles_get_editor_features( $config ) {
 function gutenberg_experimental_global_styles_settings( $settings ) {
 
 	if ( gutenberg_experimental_global_styles_has_theme_json_support() ) {
+		$settings['__experimentalGlobalStylesMapping']      = gutenberg_experimental_get_global_styles_mapping();
 		$settings['__experimentalGlobalStylesUserEntityId'] = gutenberg_experimental_global_styles_get_user_cpt_id();
 
 		$global_styles = gutenberg_experimental_global_styles_merge_trees(

@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { has, get, startsWith } from 'lodash';
+import { has, get, camelCase, startsWith } from 'lodash';
 
 /**
  * WordPress dependencies
@@ -9,17 +9,14 @@ import { has, get, startsWith } from 'lodash';
 import { addFilter } from '@wordpress/hooks';
 import { hasBlockSupport } from '@wordpress/blocks';
 import { createHigherOrderComponent } from '@wordpress/compose';
+import { select } from '@wordpress/data';
 
 /**
  * Internal dependencies
  */
 import { COLOR_SUPPORT_KEY, ColorEdit } from './color';
 import { TypographyPanel, TYPOGRAPHY_SUPPORT_KEYS } from './typography';
-import {
-	PADDING_SUPPORT_KEY,
-	PaddingEdit,
-	paddingStyleMappings,
-} from './padding';
+import { PADDING_SUPPORT_KEY, PaddingEdit } from './padding';
 import SpacingPanelControl from '../components/spacing-panel-control';
 
 const styleSupportKeys = [
@@ -52,28 +49,27 @@ function compileStyleValue( uncompiledValue ) {
  * @return {Object}        Flattened CSS variables declaration
  */
 export function getInlineStyles( styles = {} ) {
-	const mappings = {
-		...paddingStyleMappings,
-		lineHeight: [ 'typography', 'lineHeight' ],
-		fontSize: [ 'typography', 'fontSize' ],
-		background: [ 'color', 'gradient' ],
-		backgroundColor: [ 'color', 'background' ],
-		color: [ 'color', 'text' ],
-		'--wp--style--color--link': [ 'color', 'link' ],
-	};
-
+	// This function is used in a block save hook.
+	// Normally all block save related functions should be pure functions and not contain select calls.
+	// In this case the data we are querying should be static we may add new supported styles but we should not change existing styles
+	// otherwise we would cause block invalidations.
+	const mapping =
+		select( 'core/block-editor' )?.getSettings()
+			.__experimentalGlobalStylesMapping || {};
 	const output = {};
-	Object.entries( mappings ).forEach(
-		( [ styleKey, ...otherObjectKeys ] ) => {
-			const [ objectKeys ] = otherObjectKeys;
-
-			if ( has( styles, objectKeys ) ) {
-				output[ styleKey ] = compileStyleValue(
-					get( styles, objectKeys )
-				);
-			}
+	Object.entries( mapping ).forEach( ( [ styleKey, ...otherObjectKeys ] ) => {
+		if (
+			styleKey &&
+			! styleKey.startsWith( VARIABLE_PATH_SEPARATOR_TOKEN_STYLE )
+		) {
+			styleKey = camelCase( styleKey );
 		}
-	);
+		const [ objectKeys ] = otherObjectKeys;
+
+		if ( has( styles, objectKeys ) ) {
+			output[ styleKey ] = compileStyleValue( get( styles, objectKeys ) );
+		}
+	} );
 
 	return output;
 }
